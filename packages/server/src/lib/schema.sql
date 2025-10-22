@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS boards (
 );
 
 CREATE TABLE IF NOT EXISTS elements (
-  id TEXT NOT NULL, 
+  id TEXT NOT NULL,
   board_id INTEGER NOT NULL,
   data TEXT NOT NULL,
   element_index TEXT NOT NULL,
@@ -35,3 +35,10 @@ CREATE TABLE IF NOT EXISTS files (
 );
 
 CREATE INDEX IF NOT EXISTS idx_files_board_id ON files(board_id);
+
+CREATE TABLE IF NOT EXISTS libraries (
+  board_id INTEGER PRIMARY KEY,
+  data TEXT NOT NULL DEFAULT '[]',
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE
+);

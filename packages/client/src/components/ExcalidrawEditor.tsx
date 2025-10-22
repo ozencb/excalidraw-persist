@@ -1,6 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Excalidraw } from '@excalidraw/excalidraw';
-import type { ExcalidrawImperativeAPI, AppState, BinaryFiles } from '@excalidraw/excalidraw/types';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Excalidraw, useHandleLibrary } from '@excalidraw/excalidraw';
+import type {
+  ExcalidrawImperativeAPI,
+  AppState,
+  BinaryFiles,
+  LibraryItems,
+} from '@excalidraw/excalidraw/types';
 import '../styles/ExcalidrawEditor.scss';
 import { ElementService } from '../services/elementService';
 import { useExcalidrawEditor } from '../hooks/useExcalidrawEditor';
@@ -9,6 +14,7 @@ import { useTheme } from '../contexts/ThemeProvider';
 import { ExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import logger from '../utils/logger';
 import Utils from '../utils';
+import { LibraryService } from '../services/libraryService';
 
 interface ExcalidrawEditorProps {
   boardId: string;
@@ -38,7 +44,11 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
   );
 
   const handleChange = useCallback(
-    (updatedElements: readonly ExcalidrawElement[], appState: AppState, updatedFiles: BinaryFiles | null) => {
+    (
+      updatedElements: readonly ExcalidrawElement[],
+      appState: AppState,
+      updatedFiles: BinaryFiles | null
+    ) => {
       if (
         updatedElements.length === 0 &&
         (!updatedFiles || Object.keys(updatedFiles).length === 0)
@@ -58,6 +68,35 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
     },
     [originalHandleChange, currentAppTheme, setAppTheme]
   );
+
+  const libraryAdapter = useMemo(() => {
+    if (!boardId) {
+      return null;
+    }
+
+    return {
+      load: async (): Promise<{ libraryItems: LibraryItems } | null> => {
+        try {
+          const response = await LibraryService.getBoardLibrary(boardId);
+          return {
+            libraryItems: response.libraryItems ?? [],
+          };
+        } catch (error) {
+          logger.error(`Error loading library for board ${boardId}:`, error, true);
+          return null;
+        }
+      },
+      save: async ({ libraryItems }: { libraryItems: LibraryItems }) => {
+        try {
+          await LibraryService.saveBoardLibrary(boardId, libraryItems);
+        } catch (error) {
+          logger.error(`Error saving library for board ${boardId}:`, error, true);
+        }
+      },
+    };
+  }, [boardId]);
+
+  useHandleLibrary(libraryAdapter ? { excalidrawAPI, adapter: libraryAdapter } : { excalidrawAPI });
 
   useEffect(() => {
     if (excalidrawAPI) {
