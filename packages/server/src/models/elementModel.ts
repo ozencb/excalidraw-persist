@@ -1,12 +1,25 @@
+import type { Database } from 'sqlite';
 import { getDb } from '../lib/database';
 import { Element, ExcalidrawElement } from '../types';
 
+interface ReplaceAllOptions {
+  db?: Database;
+  useTransaction?: boolean;
+}
+
 export class ElementModel {
-  public static async replaceAll(boardId: number, elements: ExcalidrawElement[]): Promise<void> {
-    const db = await getDb();
+  public static async replaceAll(
+    boardId: number,
+    elements: ExcalidrawElement[],
+    options: ReplaceAllOptions = {}
+  ): Promise<void> {
+    const db = options.db ?? (await getDb());
+    const shouldManageTransaction = options.useTransaction ?? !options.db;
     const now = Date.now();
 
-    await db.run('BEGIN TRANSACTION');
+    if (shouldManageTransaction) {
+      await db.run('BEGIN TRANSACTION');
+    }
 
     try {
       await db.run('DELETE FROM elements WHERE board_id = ?', [boardId]);
@@ -35,9 +48,13 @@ export class ElementModel {
         await stmt.finalize();
       }
 
-      await db.run('COMMIT');
+      if (shouldManageTransaction) {
+        await db.run('COMMIT');
+      }
     } catch (error) {
-      await db.run('ROLLBACK');
+      if (shouldManageTransaction) {
+        await db.run('ROLLBACK');
+      }
       console.error(`Error replacing elements for board ${boardId}:`, error);
       throw error;
     }

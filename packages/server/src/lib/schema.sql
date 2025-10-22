@@ -23,3 +23,15 @@ CREATE TABLE IF NOT EXISTS elements (
 );
 
 CREATE INDEX IF NOT EXISTS idx_elements_board_id ON elements(board_id);
+
+CREATE TABLE IF NOT EXISTS files (
+  id TEXT NOT NULL,
+  board_id INTEGER NOT NULL,
+  data TEXT NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  PRIMARY KEY (id, board_id),
+  FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_files_board_id ON files(board_id);

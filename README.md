@@ -14,7 +14,6 @@ A self-hostable app with server-side persistence and multi-boards based on Excal
 - 🗃️ SQLite database for simple deployment
 
 ## TODO
-- [ ] Support file uploads
 - [ ] Collaboration support
 
 ## Development

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Excalidraw } from '@excalidraw/excalidraw';
-import type { ExcalidrawImperativeAPI, AppState } from '@excalidraw/excalidraw/types';
+import type { ExcalidrawImperativeAPI, AppState, BinaryFiles } from '@excalidraw/excalidraw/types';
 import '../styles/ExcalidrawEditor.scss';
 import { ElementService } from '../services/elementService';
 import { useExcalidrawEditor } from '../hooks/useExcalidrawEditor';
@@ -25,7 +25,9 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
   const {
     excalidrawAPI,
     elements,
+    files,
     setElements,
+    setFiles,
     setExcalidrawAPI,
     handleChange: originalHandleChange,
   } = useExcalidrawEditor(boardId);
@@ -36,13 +38,18 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
   );
 
   const handleChange = useCallback(
-    (updatedElements: readonly ExcalidrawElement[], appState: AppState) => {
-      if (updatedElements.length === 0) {
+    (updatedElements: readonly ExcalidrawElement[], appState: AppState, updatedFiles: BinaryFiles | null) => {
+      if (
+        updatedElements.length === 0 &&
+        (!updatedFiles || Object.keys(updatedFiles).length === 0)
+      ) {
         return;
       }
 
+      const filesSnapshot: BinaryFiles = updatedFiles ? { ...updatedFiles } : {};
+
       debouncedHandleChange(() => {
-        originalHandleChange(updatedElements);
+        originalHandleChange(updatedElements, filesSnapshot);
       });
 
       if (appState?.theme && appState.theme !== currentAppTheme) {
@@ -73,15 +80,22 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
     }
     try {
       setIsLoading(true);
-      const fetchedElements = await ElementService.getBoardElements(boardId);
-      setElements(fetchedElements || []);
+      const fetchedScene = await ElementService.getBoardElements(boardId);
+      if (fetchedScene) {
+        setElements(fetchedScene.elements || []);
+        setFiles(fetchedScene.files || {});
+      } else {
+        setElements([]);
+        setFiles({});
+      }
     } catch (error) {
-      logger.error('Error fetching board elements:', error, true);
+      logger.error('Error fetching board scene:', error, true);
       setElements([]);
+      setFiles({});
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, setElements]);
+  }, [boardId, setElements, setFiles]);
 
   useEffect(() => {
     fetchBoardElements();
@@ -113,7 +127,8 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
         <Excalidraw
           key={boardId}
           initialData={{
-            elements: elements,
+            elements,
+            files,
             appState: {
               theme: currentAppTheme,
             },

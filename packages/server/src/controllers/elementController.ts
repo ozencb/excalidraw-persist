@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { ElementModel } from '../models/elementModel';
 import { BoardModel } from '../models/boardModel';
-import { ExcalidrawElement } from '../types';
+import { FileModel } from '../models/fileModel';
+import { getDb } from '../lib/database';
+import { ExcalidrawElement, ExcalidrawFilesMap, ExcalidrawSceneData } from '../types';
 import logger from '../utils/logger';
 
 export const elementController = {
@@ -23,12 +25,17 @@ export const elementController = {
       }
 
       const elements = await ElementModel.findAllByBoardId(boardId);
+      const files = await FileModel.findAllByBoardId(boardId);
 
       const excalidrawElements = ElementModel.convertToExcalidrawElements(elements);
+      const excalidrawFiles = FileModel.convertToExcalidrawFiles(files);
 
       return res.status(200).json({
         success: true,
-        data: excalidrawElements,
+        data: {
+          elements: excalidrawElements,
+          files: excalidrawFiles,
+        },
       });
     } catch (error) {
       logger.error(`Error getting elements for board ${req.params.boardId}:`, error);
@@ -39,20 +46,44 @@ export const elementController = {
     }
   },
 
-  async replaceAll(req: Request<{ boardId: string }, unknown, ExcalidrawElement[]>, res: Response) {
+  async replaceAll(
+    req: Request<{ boardId: string }, unknown, ExcalidrawSceneData | ExcalidrawElement[]>,
+    res: Response
+  ) {
     try {
       const { boardId: boardIdParam } = req.params;
-      const elements = req.body;
+      const body = req.body;
       const boardId = parseInt(boardIdParam, 10);
       if (isNaN(boardId)) {
         return res.status(400).json({ success: false, message: 'Invalid board ID format' });
       }
 
-      // Validate input
-      if (!Array.isArray(elements)) {
+      let elements: ExcalidrawElement[] = [];
+      let files: ExcalidrawFilesMap = {};
+
+      if (Array.isArray(body)) {
+        elements = body;
+      } else if (body && typeof body === 'object') {
+        const scenePayload = body as Partial<ExcalidrawSceneData>;
+        if (!scenePayload.elements || !Array.isArray(scenePayload.elements)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid scene payload: elements must be an array',
+          });
+        }
+        elements = scenePayload.elements;
+
+        if (
+          scenePayload.files &&
+          typeof scenePayload.files === 'object' &&
+          !Array.isArray(scenePayload.files)
+        ) {
+          files = { ...scenePayload.files } as ExcalidrawFilesMap;
+        }
+      } else {
         return res.status(400).json({
           success: false,
-          message: 'Request body must be an array of elements',
+          message: 'Invalid request payload',
         });
       }
 
@@ -64,7 +95,17 @@ export const elementController = {
         });
       }
 
-      await ElementModel.replaceAll(boardId, elements);
+      const db = await getDb();
+      await db.run('BEGIN TRANSACTION');
+
+      try {
+        await ElementModel.replaceAll(boardId, elements, { db, useTransaction: false });
+        await FileModel.replaceAll(boardId, files, { db, useTransaction: false });
+        await db.run('COMMIT');
+      } catch (transactionError) {
+        await db.run('ROLLBACK');
+        throw transactionError;
+      }
 
       await BoardModel.update(boardId, {});
 
