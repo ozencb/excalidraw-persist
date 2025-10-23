@@ -8,7 +8,7 @@ A self-hostable app with server-side persistence and multi-boards based on Excal
 
 ## Features
 
-- 💾 Server-side persistence of drawings
+- 💾 Server-side persistence of drawings, images, library objects
 - 📑 Multiple boards/tabs support
 - 🗑️ Trash functionality for deleted boards
 - 🗃️ SQLite database for simple deployment
