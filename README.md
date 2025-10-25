@@ -1,6 +1,6 @@
 # Excalidraw Persist
 
-A self-hostable app with server-side persistence and multi-boards based on Excalidraw.
+A self-hostable app with server-side persistence and multiple boards based on Excalidraw.
 
 `docker run -p 80:80 -p 4000:4000 ghcr.io/ozencb/excalidraw-persist:latest`
 
