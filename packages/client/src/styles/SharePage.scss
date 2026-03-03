@@ -1,0 +1,60 @@
+.share-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+
+  .share-header {
+    display: flex;
+    align-items: center;
+    gap: calc(2 * var(--space-factor));
+    height: var(--lg-button-size);
+    padding: 0 calc(4 * var(--space-factor));
+    background-color: var(--color-surface-low);
+    border-bottom: 1px solid var(--sidebar-border-color);
+  }
+
+  .share-board-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary-color);
+  }
+
+  .share-badge {
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: calc(0.5 * var(--space-factor)) calc(1.5 * var(--space-factor));
+    border-radius: var(--border-radius-md);
+    background-color: var(--color-gray-20);
+    color: var(--color-gray-80);
+  }
+
+  .editor-container {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  &.loading {
+    // Loader handles centering
+  }
+
+  &.error {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .error-container {
+      padding: calc(5 * var(--space-factor));
+      text-align: center;
+
+      h2 {
+        color: var(--color-danger);
+        margin-bottom: calc(2.5 * var(--space-factor));
+      }
+
+      p {
+        color: var(--color-gray-70);
+      }
+    }
+  }
+}

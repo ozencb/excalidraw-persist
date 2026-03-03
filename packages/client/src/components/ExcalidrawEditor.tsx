@@ -8,6 +8,7 @@ import type {
 } from '@excalidraw/excalidraw/types';
 import '../styles/ExcalidrawEditor.scss';
 import { ElementService } from '../services/elementService';
+import { ShareService } from '../services/shareService';
 import { useExcalidrawEditor } from '../hooks/useExcalidrawEditor';
 import Loader from './Loader';
 import { useTheme } from '../contexts/ThemeProvider';
@@ -16,10 +17,12 @@ import logger from '../utils/logger';
 import { LibraryService } from '../services/libraryService';
 
 interface ExcalidrawEditorProps {
-  boardId: string;
+  boardId?: string;
+  shareId?: string;
+  readOnly?: boolean;
 }
 
-const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
+const ExcalidrawEditor = ({ boardId, shareId, readOnly }: ExcalidrawEditorProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { theme: currentAppTheme, setTheme: setAppTheme } = useTheme();
 
@@ -32,7 +35,7 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
     setExcalidrawAPI,
     handleChange: onSceneChange,
     initializeVersionTracking,
-  } = useExcalidrawEditor(boardId);
+  } = useExcalidrawEditor({ boardId, shareId, readOnly });
 
   const handleExcalidrawAPI = useCallback(
     (api: ExcalidrawImperativeAPI) => setExcalidrawAPI(api),
@@ -62,31 +65,35 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
   );
 
   const libraryAdapter = useMemo(() => {
-    if (!boardId) {
-      return null;
-    }
+    const resourceId = shareId || boardId;
+    if (!resourceId) return null;
 
     return {
       load: async (): Promise<{ libraryItems: LibraryItems } | null> => {
         try {
-          const response = await LibraryService.getBoardLibrary(boardId);
-          return {
-            libraryItems: response.libraryItems ?? [],
-          };
+          const response = shareId
+            ? await ShareService.getLibrary(shareId)
+            : await LibraryService.getBoardLibrary(resourceId);
+          return { libraryItems: (response.libraryItems ?? []) as LibraryItems };
         } catch (error) {
-          logger.error(`Error loading library for board ${boardId}:`, error, true);
+          logger.error(`Error loading library:`, error, true);
           return null;
         }
       },
       save: async ({ libraryItems }: { libraryItems: LibraryItems }) => {
+        if (readOnly) return;
         try {
-          await LibraryService.saveBoardLibrary(boardId, libraryItems);
+          if (shareId) {
+            await ShareService.saveLibrary(shareId, libraryItems);
+          } else {
+            await LibraryService.saveBoardLibrary(resourceId, libraryItems);
+          }
         } catch (error) {
-          logger.error(`Error saving library for board ${boardId}:`, error, true);
+          logger.error(`Error saving library:`, error, true);
         }
       },
     };
-  }, [boardId]);
+  }, [boardId, shareId, readOnly]);
 
   useHandleLibrary(libraryAdapter ? { excalidrawAPI, adapter: libraryAdapter } : { excalidrawAPI });
 
@@ -104,14 +111,17 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
   }, [excalidrawAPI, currentAppTheme, setAppTheme]);
 
   const fetchBoardElements = useCallback(async () => {
-    if (!boardId) {
+    const resourceId = shareId || boardId;
+    if (!resourceId) {
       setElements([]);
       setIsLoading(false);
       return;
     }
     try {
       setIsLoading(true);
-      const fetchedScene = await ElementService.getBoardElements(boardId);
+      const fetchedScene = shareId
+        ? await ShareService.getElements(shareId)
+        : await ElementService.getBoardElements(resourceId);
       if (fetchedScene) {
         const loadedElements = fetchedScene.elements || [];
         setElements(loadedElements);
@@ -130,7 +140,7 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, setElements, setFiles, initializeVersionTracking]);
+  }, [boardId, shareId, setElements, setFiles, initializeVersionTracking]);
 
   useEffect(() => {
     fetchBoardElements();
@@ -146,7 +156,9 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
     );
   }
 
-  if (!boardId) {
+  const resourceId = shareId || boardId;
+
+  if (!resourceId) {
     return (
       <div className="excalidraw-editor">
         <div className="excalidraw-container">
@@ -160,7 +172,7 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
     <div className="excalidraw-editor">
       <div className="excalidraw-container relative">
         <Excalidraw
-          key={boardId}
+          key={resourceId}
           initialData={{
             elements,
             files,
@@ -169,7 +181,8 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
             },
           }}
           onChange={handleChange}
-          name={`Board: ${boardId}`}
+          viewModeEnabled={readOnly}
+          name={`Board: ${resourceId}`}
           excalidrawAPI={handleExcalidrawAPI}
           UIOptions={{
             canvasActions: {

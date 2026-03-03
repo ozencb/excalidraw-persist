@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { boardController } from '../controllers/boardController';
 import { elementController } from '../controllers/elementController';
+import { shareController } from '../controllers/shareController';
 import elementRoutes from './elementRoutes';
 import libraryRoutes from './libraryRoutes';
 
@@ -17,5 +18,7 @@ router.use('/:boardId/elements', elementRoutes);
 router.use('/:boardId/library', libraryRoutes);
 router.post('/:boardId/files/check', elementController.checkFiles);
 router.post('/:boardId/files', elementController.uploadFiles);
+router.post('/:boardId/share', shareController.createShareLink);
+router.get('/:boardId/share', shareController.listShareLinks);
 
 export default router;

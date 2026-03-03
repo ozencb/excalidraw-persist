@@ -4,6 +4,30 @@ import logger from '../utils/logger';
 
 export async function runMigrations(): Promise<void> {
   await migrateBoardIdsToUuid();
+  await createShareLinksTable();
+}
+
+async function createShareLinksTable(): Promise<void> {
+  const db = await getDb();
+
+  const tables = await db.all<{ name: string }[]>(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='share_links'"
+  );
+
+  if (tables.length > 0) return;
+
+  logger.info('Creating share_links table...');
+
+  await db.run(`CREATE TABLE share_links (
+    id TEXT PRIMARY KEY,
+    board_id TEXT NOT NULL,
+    permission TEXT NOT NULL CHECK (permission IN ('edit', 'readonly')),
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
+    UNIQUE (board_id, permission)
+  )`);
+
+  logger.info('share_links table created.');
 }
 
 async function migrateBoardIdsToUuid(): Promise<void> {

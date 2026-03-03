@@ -42,3 +42,12 @@ CREATE TABLE IF NOT EXISTS libraries (
   updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
   FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS share_links (
+  id TEXT PRIMARY KEY,
+  board_id TEXT NOT NULL,
+  permission TEXT NOT NULL CHECK (permission IN ('edit', 'readonly')),
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
+  UNIQUE (board_id, permission)
+);

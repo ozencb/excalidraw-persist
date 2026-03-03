@@ -5,7 +5,8 @@
   background-color: var(--color-surface-low);
   border-bottom: 1px solid var(--sidebar-border-color);
 
-  .archive-button {
+  .archive-button,
+  .share-button {
     background: none;
     border: none;
     cursor: pointer;

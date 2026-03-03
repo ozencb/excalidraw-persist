@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import '../styles/Header.scss';
 import ArchivePopup from './ArchivePopup';
+import SharePopup from './SharePopup';
 import Tab from './Tab';
 import { useBoardContext } from '../contexts/BoardProvider';
 import Icon from './Icon';
 
 const Header = () => {
   const [isArchivePopupOpen, setIsArchivePopupOpen] = useState(false);
+  const [isSharePopupOpen, setIsSharePopupOpen] = useState(false);
 
   const { boards, isLoading, activeBoardId, handleCreateBoard } = useBoardContext();
 
@@ -33,7 +35,20 @@ const Header = () => {
         </button>
       </div>
 
+      {activeBoardId && (
+        <button className="share-button" onClick={() => setIsSharePopupOpen(true)}>
+          <Icon name="share" />
+        </button>
+      )}
+
       <ArchivePopup isOpen={isArchivePopupOpen} onClose={() => setIsArchivePopupOpen(false)} />
+      {activeBoardId && (
+        <SharePopup
+          isOpen={isSharePopupOpen}
+          onClose={() => setIsSharePopupOpen(false)}
+          boardId={activeBoardId}
+        />
+      )}
     </div>
   );
 };

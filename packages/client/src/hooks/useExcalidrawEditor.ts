@@ -1,11 +1,49 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import type { BinaryFiles, ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
-import { ElementService } from '../services/elementService';
+import { ElementService, type BoardSceneData, type DeltaPayload } from '../services/elementService';
+import { ShareService } from '../services/shareService';
 import Utils from '../utils';
 import logger from '../utils/logger';
 
-export const useExcalidrawEditor = (boardId: string | undefined) => {
+interface EditorApi {
+  getElements: (id: string) => Promise<BoardSceneData>;
+  saveDelta: (id: string, delta: DeltaPayload) => Promise<void>;
+  replaceAllElements: (id: string, scene: BoardSceneData) => Promise<void>;
+  checkFiles: (id: string, fileIds: string[]) => Promise<{ missingIds: string[] }>;
+  uploadFiles: (id: string, files: BinaryFiles) => Promise<void>;
+}
+
+const boardApi: EditorApi = {
+  getElements: ElementService.getBoardElements,
+  saveDelta: ElementService.saveDelta,
+  replaceAllElements: ElementService.replaceAllElements,
+  checkFiles: ElementService.checkFiles,
+  uploadFiles: ElementService.uploadFiles,
+};
+
+const shareApi: EditorApi = {
+  getElements: ShareService.getElements,
+  saveDelta: ShareService.saveDelta,
+  replaceAllElements: ShareService.replaceAllElements,
+  checkFiles: ShareService.checkFiles,
+  uploadFiles: ShareService.uploadFiles,
+};
+
+interface UseExcalidrawEditorOptions {
+  boardId?: string;
+  shareId?: string;
+  readOnly?: boolean;
+}
+
+export const useExcalidrawEditor = (boardIdOrOptions: string | undefined | UseExcalidrawEditorOptions) => {
+  const options: UseExcalidrawEditorOptions = typeof boardIdOrOptions === 'object' && boardIdOrOptions !== null
+    ? boardIdOrOptions
+    : { boardId: boardIdOrOptions ?? undefined };
+
+  const { boardId, shareId, readOnly } = options;
+  const resourceId = shareId || boardId;
+  const api = useMemo(() => (shareId ? shareApi : boardApi), [shareId]);
   const [elements, setElements] = useState<ExcalidrawElement[]>([]);
   const [files, setFiles] = useState<BinaryFiles>({});
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
@@ -16,26 +54,26 @@ export const useExcalidrawEditor = (boardId: string | undefined) => {
 
   const saveScene = useCallback(
     async (elementsArray: ExcalidrawElement[], filesMap: BinaryFiles) => {
-      if (!boardId || isSavingRef.current) return;
+      if (!resourceId || readOnly || isSavingRef.current) return;
       isSavingRef.current = true;
 
       try {
         // Upload new files first
         const fileIds = Object.keys(filesMap);
         if (fileIds.length > 0) {
-          const { missingIds } = await ElementService.checkFiles(boardId, fileIds);
+          const { missingIds } = await api.checkFiles(resourceId, fileIds);
           if (missingIds.length > 0) {
             const newFiles: BinaryFiles = {};
             for (const id of missingIds) {
               newFiles[id] = filesMap[id];
             }
-            await ElementService.uploadFiles(boardId, newFiles);
+            await api.uploadFiles(resourceId, newFiles);
           }
         }
 
         // Full sync fallback
         if (needsFullSyncRef.current) {
-          await ElementService.replaceAllElements(boardId, {
+          await api.replaceAllElements(resourceId, {
             elements: elementsArray,
             files: {},
           });
@@ -73,11 +111,11 @@ export const useExcalidrawEditor = (boardId: string | undefined) => {
         if (upserted.length === 0 && deleted.length === 0) return;
 
         try {
-          await ElementService.saveDelta(boardId, { upserted, deleted });
+          await api.saveDelta(resourceId, { upserted, deleted });
         } catch {
           // Delta failed — fall back to full replace next time
           needsFullSyncRef.current = true;
-          await ElementService.replaceAllElements(boardId, {
+          await api.replaceAllElements(resourceId, {
             elements: elementsArray,
             files: {},
           });
@@ -96,7 +134,7 @@ export const useExcalidrawEditor = (boardId: string | undefined) => {
         isSavingRef.current = false;
       }
     },
-    [boardId]
+    [resourceId, readOnly, api]
   );
 
   const saveSceneRef = useRef(saveScene);
@@ -120,11 +158,11 @@ export const useExcalidrawEditor = (boardId: string | undefined) => {
       setElements(elementsArray);
       setFiles(filesMap);
 
-      if (boardId) {
+      if (resourceId && !readOnly) {
         debouncedSaveRef.current!(elementsArray, filesMap);
       }
     },
-    [boardId]
+    [resourceId, readOnly]
   );
 
   const initializeVersionTracking = useCallback((loadedElements: ExcalidrawElement[]) => {
