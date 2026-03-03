@@ -2,13 +2,13 @@ import Utils from '../utils';
 import { useTheme } from '../contexts/ThemeProvider';
 import { THEME } from '@excalidraw/excalidraw';
 
-type AvailableIcons = 'trash' | 'close' | 'plus';
+type AvailableIcons = 'archive' | 'close' | 'plus';
 
 interface IconComponentProps {
   className?: string;
 }
 
-const Trash = ({ className }: IconComponentProps) => {
+const Archive = ({ className }: IconComponentProps) => {
   return (
     <svg
       height="21"
@@ -23,12 +23,11 @@ const Trash = ({ className }: IconComponentProps) => {
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
-        transform="translate(3 2)"
+        transform="translate(3 3)"
       >
-        <path d="m2.5 2.5h10v12c0 1.1045695-.8954305 2-2 2h-6c-1.1045695 0-2-.8954305-2-2zm5-2c1.0543618 0 1.91816512.81587779 1.99451426 1.85073766l.00548574.14926234h-4c0-1.1045695.8954305-2 2-2z" />
-        <path d="m.5 2.5h14" />
-        <path d="m5.5 5.5v8" />
-        <path d="m9.5 5.5v8" />
+        <path d="m.5.5h14v3h-14z" />
+        <path d="m2.5 3.5v9c0 1.1045695.8954305 2 2 2h6c1.1045695 0 2-.8954305 2-2v-9" />
+        <path d="m5.5 6.5h4" />
       </g>
     </svg>
   );
@@ -93,8 +92,8 @@ const Icon = ({ name, className }: IconProps) => {
   }`;
 
   switch (name) {
-    case 'trash':
-      return <Trash className={iconClassName} />;
+    case 'archive':
+      return <Archive className={iconClassName} />;
     case 'close':
       return <Close className={iconClassName} />;
     case 'plus':

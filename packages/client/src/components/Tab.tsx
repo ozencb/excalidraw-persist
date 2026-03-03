@@ -10,7 +10,7 @@ interface TabProps {
 }
 
 const Tab = ({ board, activeBoardId }: TabProps) => {
-  const { handleRenameBoard, handleDeleteBoard } = useBoardContext();
+  const { handleRenameBoard, handleArchiveBoard } = useBoardContext();
 
   const isActive = board.id.toString() === activeBoardId;
 
@@ -39,9 +39,9 @@ const Tab = ({ board, activeBoardId }: TabProps) => {
           onClick={e => {
             e.preventDefault();
             e.stopPropagation();
-            handleDeleteBoard(board.id);
+            handleArchiveBoard(board.id);
           }}
-          aria-label={`Move board ${board.name} to trash`}
+          aria-label={`Archive board ${board.name}`}
         >
           <Icon name="close" />
         </button>

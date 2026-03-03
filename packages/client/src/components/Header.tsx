@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import '../styles/Header.scss';
-import TrashPopup from './TrashPopup';
+import ArchivePopup from './ArchivePopup';
 import Tab from './Tab';
 import { useBoardContext } from '../contexts/BoardProvider';
 import Icon from './Icon';
 
 const Header = () => {
-  const [isTrashPopupOpen, setIsTrashPopupOpen] = useState(false);
+  const [isArchivePopupOpen, setIsArchivePopupOpen] = useState(false);
 
   const { boards, isLoading, activeBoardId, handleCreateBoard } = useBoardContext();
 
@@ -16,8 +16,8 @@ const Header = () => {
 
   return (
     <div className="header">
-      <button className="trash-button" onClick={() => setIsTrashPopupOpen(true)}>
-        <Icon name="trash" />
+      <button className="archive-button" onClick={() => setIsArchivePopupOpen(true)}>
+        <Icon name="archive" />
       </button>
 
       <div className="tab-bar">
@@ -33,7 +33,7 @@ const Header = () => {
         </button>
       </div>
 
-      <TrashPopup isOpen={isTrashPopupOpen} onClose={() => setIsTrashPopupOpen(false)} />
+      <ArchivePopup isOpen={isArchivePopupOpen} onClose={() => setIsArchivePopupOpen(false)} />
     </div>
   );
 };

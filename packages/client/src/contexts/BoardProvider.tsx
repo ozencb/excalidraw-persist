@@ -19,7 +19,7 @@ interface BoardContextType {
   fetchBoards: () => Promise<void>;
   handleRenameBoard: (id: number, newName: string) => void;
   handleCreateBoard: () => Promise<void>;
-  handleDeleteBoard: (id: number) => Promise<void>;
+  handleArchiveBoard: (id: number) => Promise<void>;
   activeBoardId: string | undefined;
 }
 
@@ -89,7 +89,7 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({ children }) => {
     }
   }, [navigate]);
 
-  const handleDeleteBoard = useCallback(
+  const handleArchiveBoard = useCallback(
     async (id: number) => {
       const boardToDelete = boards.find(b => b.id === id);
       if (!boardToDelete) return;
@@ -151,7 +151,7 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({ children }) => {
     fetchBoards,
     handleRenameBoard,
     handleCreateBoard,
-    handleDeleteBoard,
+    handleArchiveBoard,
     activeBoardId,
   };
 
