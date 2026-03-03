@@ -60,6 +60,46 @@ export class ElementModel {
     }
   }
 
+  public static async upsertMany(
+    boardId: number,
+    elements: ExcalidrawElement[]
+  ): Promise<void> {
+    if (elements.length === 0) return;
+
+    const db = await getDb();
+    const now = Date.now();
+    const sql = `INSERT OR REPLACE INTO elements
+      (id, board_id, data, element_index, type, created_at, updated_at, is_deleted)
+    VALUES
+      (?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM elements WHERE id = ? AND board_id = ?), ?), ?, ?)`;
+
+    const stmt = await db.prepare(sql);
+    for (const element of elements) {
+      await stmt.run([
+        element.id,
+        boardId,
+        JSON.stringify(element),
+        element.index || '',
+        element.type,
+        element.id, boardId, now, // for COALESCE: preserve original created_at
+        now,
+        element.isDeleted ? 1 : 0,
+      ]);
+    }
+    await stmt.finalize();
+  }
+
+  public static async deleteMany(boardId: number, ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+
+    const db = await getDb();
+    const placeholders = ids.map(() => '?').join(',');
+    await db.run(
+      `DELETE FROM elements WHERE board_id = ? AND id IN (${placeholders})`,
+      [boardId, ...ids]
+    );
+  }
+
   public static async findById(boardId: number, id: string): Promise<Element | undefined> {
     const db = await getDb();
     const result = await db.get<Element | undefined>(

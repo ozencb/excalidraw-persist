@@ -50,6 +50,38 @@ export class FileModel {
     }
   }
 
+  public static async checkExisting(boardId: number, fileIds: string[]): Promise<string[]> {
+    if (fileIds.length === 0) return [];
+    const db = await getDb();
+    const placeholders = fileIds.map(() => '?').join(',');
+    const rows = await db.all<{ id: string }[]>(
+      `SELECT id FROM files WHERE board_id = ? AND id IN (${placeholders})`,
+      [boardId, ...fileIds]
+    );
+    return rows.map(r => r.id);
+  }
+
+  public static async upsertMany(
+    boardId: number,
+    files: ExcalidrawFilesMap
+  ): Promise<void> {
+    const entries = Object.entries(files);
+    if (entries.length === 0) return;
+
+    const db = await getDb();
+    const now = Date.now();
+    const sql = `INSERT OR IGNORE INTO files (id, board_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`;
+    const stmt = await db.prepare(sql);
+
+    for (const [id, file] of entries) {
+      const fileId = file.id || id;
+      const serializedFile = JSON.stringify({ ...file, id: fileId });
+      await stmt.run([fileId, boardId, serializedFile, now, now]);
+    }
+
+    await stmt.finalize();
+  }
+
   public static async findAllByBoardId(boardId: number): Promise<StoredFile[]> {
     const db = await getDb();
     return db.all<StoredFile[]>('SELECT * FROM files WHERE board_id = ?', [boardId]);

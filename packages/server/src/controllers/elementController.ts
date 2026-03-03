@@ -46,6 +46,96 @@ export const elementController = {
     }
   },
 
+  async checkFiles(req: Request<{ boardId: string }>, res: Response) {
+    try {
+      const boardId = parseInt(req.params.boardId, 10);
+      if (isNaN(boardId)) {
+        return res.status(400).json({ success: false, message: 'Invalid board ID format' });
+      }
+
+      const { fileIds } = req.body as { fileIds: string[] };
+      if (!Array.isArray(fileIds)) {
+        return res.status(400).json({ success: false, message: 'fileIds must be an array' });
+      }
+
+      const existingIds = await FileModel.checkExisting(boardId, fileIds);
+      const missingIds = fileIds.filter(id => !existingIds.includes(id));
+
+      return res.status(200).json({ success: true, data: { missingIds } });
+    } catch (error) {
+      logger.error(`Error checking files for board ${req.params.boardId}:`, error);
+      return res.status(500).json({ success: false, message: 'Failed to check files' });
+    }
+  },
+
+  async uploadFiles(req: Request<{ boardId: string }>, res: Response) {
+    try {
+      const boardId = parseInt(req.params.boardId, 10);
+      if (isNaN(boardId)) {
+        return res.status(400).json({ success: false, message: 'Invalid board ID format' });
+      }
+
+      const board = await BoardModel.findById(boardId);
+      if (!board) {
+        return res.status(404).json({ success: false, message: 'Board not found' });
+      }
+
+      const { files } = req.body as { files: ExcalidrawFilesMap };
+      if (!files || typeof files !== 'object') {
+        return res.status(400).json({ success: false, message: 'files must be an object' });
+      }
+
+      await FileModel.upsertMany(boardId, files);
+
+      return res.status(200).json({ success: true, message: 'Files uploaded' });
+    } catch (error) {
+      logger.error(`Error uploading files for board ${req.params.boardId}:`, error);
+      return res.status(500).json({ success: false, message: 'Failed to upload files' });
+    }
+  },
+
+  async applyDelta(req: Request<{ boardId: string }>, res: Response) {
+    try {
+      const boardId = parseInt(req.params.boardId, 10);
+      if (isNaN(boardId)) {
+        return res.status(400).json({ success: false, message: 'Invalid board ID format' });
+      }
+
+      const board = await BoardModel.findById(boardId);
+      if (!board) {
+        return res.status(404).json({ success: false, message: 'Board not found' });
+      }
+
+      const { upserted, deleted } = req.body as {
+        upserted: ExcalidrawElement[];
+        deleted: string[];
+      };
+
+      const db = await getDb();
+      await db.run('BEGIN TRANSACTION');
+
+      try {
+        if (upserted && upserted.length > 0) {
+          await ElementModel.upsertMany(boardId, upserted);
+        }
+        if (deleted && deleted.length > 0) {
+          await ElementModel.deleteMany(boardId, deleted);
+        }
+        await db.run('COMMIT');
+      } catch (txError) {
+        await db.run('ROLLBACK');
+        throw txError;
+      }
+
+      await BoardModel.update(boardId, {});
+
+      return res.status(200).json({ success: true, message: 'Delta applied' });
+    } catch (error) {
+      logger.error(`Error applying delta for board ${req.params.boardId}:`, error);
+      return res.status(500).json({ success: false, message: 'Failed to apply delta' });
+    }
+  },
+
   async replaceAll(
     req: Request<{ boardId: string }, unknown, ExcalidrawSceneData | ExcalidrawElement[]>,
     res: Response

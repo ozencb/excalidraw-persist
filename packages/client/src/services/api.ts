@@ -55,6 +55,23 @@ export const api = {
     return data.data as T;
   },
 
+  async patch<T>(endpoint: string, body: RequestBody): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const data: ApiResponse<T> = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.message || 'Request failed');
+    }
+
+    return data.data as T;
+  },
+
   async delete(endpoint: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',

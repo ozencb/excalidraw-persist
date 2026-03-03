@@ -13,16 +13,11 @@ import Loader from './Loader';
 import { useTheme } from '../contexts/ThemeProvider';
 import { ExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import logger from '../utils/logger';
-import Utils from '../utils';
 import { LibraryService } from '../services/libraryService';
 
 interface ExcalidrawEditorProps {
   boardId: string;
 }
-
-const debouncedHandleChange = Utils.debounce((f: () => void) => {
-  f();
-}, 500);
 
 const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -35,7 +30,8 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
     setElements,
     setFiles,
     setExcalidrawAPI,
-    handleChange: originalHandleChange,
+    handleChange: onSceneChange,
+    initializeVersionTracking,
   } = useExcalidrawEditor(boardId);
 
   const handleExcalidrawAPI = useCallback(
@@ -56,17 +52,13 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
         return;
       }
 
-      const filesSnapshot: BinaryFiles = updatedFiles ? { ...updatedFiles } : {};
-
-      debouncedHandleChange(() => {
-        originalHandleChange(updatedElements, filesSnapshot);
-      });
+      onSceneChange(updatedElements, updatedFiles);
 
       if (appState?.theme && appState.theme !== currentAppTheme) {
         setAppTheme(appState.theme);
       }
     },
-    [originalHandleChange, currentAppTheme, setAppTheme]
+    [onSceneChange, currentAppTheme, setAppTheme]
   );
 
   const libraryAdapter = useMemo(() => {
@@ -121,20 +113,24 @@ const ExcalidrawEditor = ({ boardId }: ExcalidrawEditorProps) => {
       setIsLoading(true);
       const fetchedScene = await ElementService.getBoardElements(boardId);
       if (fetchedScene) {
-        setElements(fetchedScene.elements || []);
+        const loadedElements = fetchedScene.elements || [];
+        setElements(loadedElements);
         setFiles(fetchedScene.files || {});
+        initializeVersionTracking(loadedElements);
       } else {
         setElements([]);
         setFiles({});
+        initializeVersionTracking([]);
       }
     } catch (error) {
       logger.error('Error fetching board scene:', error, true);
       setElements([]);
       setFiles({});
+      initializeVersionTracking([]);
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, setElements, setFiles]);
+  }, [boardId, setElements, setFiles, initializeVersionTracking]);
 
   useEffect(() => {
     fetchBoardElements();

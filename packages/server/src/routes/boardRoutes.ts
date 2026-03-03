@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { boardController } from '../controllers/boardController';
+import { elementController } from '../controllers/elementController';
 import elementRoutes from './elementRoutes';
 import libraryRoutes from './libraryRoutes';
 
@@ -14,5 +15,7 @@ router.post('/:id/restore', boardController.restoreFromTrash);
 router.delete('/:id/permanent', boardController.permanentDelete);
 router.use('/:boardId/elements', elementRoutes);
 router.use('/:boardId/library', libraryRoutes);
+router.post('/:boardId/files/check', elementController.checkFiles);
+router.post('/:boardId/files', elementController.uploadFiles);
 
 export default router;
