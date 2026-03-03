@@ -37,11 +37,11 @@ export class ElementModel {
             element.id,
             boardId,
             JSON.stringify(element),
-            element.index || '',
+            element.index ?? '',
             element.type,
             now,
             now,
-            element.isDeleted || false ? 1 : 0,
+            element.isDeleted ? 1 : 0,
           ];
           await stmt.run(dbElementData);
         }
@@ -79,7 +79,7 @@ export class ElementModel {
         element.id,
         boardId,
         JSON.stringify(element),
-        element.index || '',
+        element.index ?? '',
         element.type,
         element.id, boardId, now, // for COALESCE: preserve original created_at
         now,

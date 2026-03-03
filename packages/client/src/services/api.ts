@@ -29,6 +29,11 @@ export const api = {
       },
       body: JSON.stringify(body),
     });
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
     const data: ApiResponse<T> = await response.json();
 
     if (!data.success) {
@@ -46,6 +51,11 @@ export const api = {
       },
       body: JSON.stringify(body),
     });
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
     const data: ApiResponse<T> = await response.json();
 
     if (!data.success) {
@@ -63,6 +73,11 @@ export const api = {
       },
       body: JSON.stringify(body),
     });
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
     const data: ApiResponse<T> = await response.json();
 
     if (!data.success) {
@@ -76,6 +91,11 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',
     });
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
     const data: ApiResponse<void> = await response.json();
 
     if (!data.success) {

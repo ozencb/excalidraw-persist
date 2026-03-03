@@ -99,11 +99,14 @@ export const useExcalidrawEditor = (boardId: string | undefined) => {
     [boardId]
   );
 
+  const saveSceneRef = useRef(saveScene);
+  saveSceneRef.current = saveScene;
+
   const debouncedSaveRef = useRef<ReturnType<typeof Utils.debounce>>();
   if (!debouncedSaveRef.current) {
     debouncedSaveRef.current = Utils.debounce(
       (elems: ExcalidrawElement[], filesMap: BinaryFiles) => {
-        saveScene(elems, filesMap);
+        saveSceneRef.current(elems, filesMap);
       },
       500
     );

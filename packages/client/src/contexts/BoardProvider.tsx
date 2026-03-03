@@ -52,6 +52,8 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({ children }) => {
       setIsLoading(false);
     } catch (error) {
       logger.error('Error fetching boards:', error, true);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -122,7 +124,7 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({ children }) => {
         setBoards(previousBoards);
       }
     },
-    [boards, navigate, activeBoardId, handleCreateBoard]
+    [boards, navigate, activeBoardId, handleCreateBoard, fetchBoards]
   );
 
   useEffect(() => {
