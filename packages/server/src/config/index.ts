@@ -5,7 +5,7 @@ export const serverConfig = {
   port: env.PORT || 3001,
   nodeEnv: env.NODE_ENV || 'development',
   isDev: env.NODE_ENV !== 'production',
-  dbPath: path.join(process.cwd(), 'data', 'excalidraw.db'),
+  dbPath: env.DB_PATH,
 };
 
 export const dbConfig = {

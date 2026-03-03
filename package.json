@@ -1,6 +1,6 @@
 {
   "name": "excalidraw-persist",
-  "version": "0.18.0-persist.1",
+  "version": "0.18.0-persist.2",
   "description": "Self-hostable Excalidraw server-side persistence, and multi-boards",
   "private": true,
   "scripts": {
