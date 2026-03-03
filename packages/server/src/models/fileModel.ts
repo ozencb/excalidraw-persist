@@ -9,7 +9,7 @@ interface ReplaceAllOptions {
 
 export class FileModel {
   public static async replaceAll(
-    boardId: number,
+    boardId: string,
     files: ExcalidrawFilesMap = {},
     options: ReplaceAllOptions = {}
   ): Promise<void> {
@@ -50,7 +50,7 @@ export class FileModel {
     }
   }
 
-  public static async checkExisting(boardId: number, fileIds: string[]): Promise<string[]> {
+  public static async checkExisting(boardId: string, fileIds: string[]): Promise<string[]> {
     if (fileIds.length === 0) return [];
     const db = await getDb();
     const placeholders = fileIds.map(() => '?').join(',');
@@ -62,7 +62,7 @@ export class FileModel {
   }
 
   public static async upsertMany(
-    boardId: number,
+    boardId: string,
     files: ExcalidrawFilesMap
   ): Promise<void> {
     const entries = Object.entries(files);
@@ -82,7 +82,7 @@ export class FileModel {
     await stmt.finalize();
   }
 
-  public static async findAllByBoardId(boardId: number): Promise<StoredFile[]> {
+  public static async findAllByBoardId(boardId: string): Promise<StoredFile[]> {
     const db = await getDb();
     return db.all<StoredFile[]>('SELECT * FROM files WHERE board_id = ?', [boardId]);
   }

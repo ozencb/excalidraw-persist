@@ -7,12 +7,7 @@ import logger from '../utils/logger';
 export const libraryController = {
   async getByBoardId(req: Request<{ boardId: string }>, res: Response) {
     try {
-      const { boardId: boardIdParam } = req.params;
-      const boardId = parseInt(boardIdParam, 10);
-
-      if (isNaN(boardId)) {
-        return res.status(400).json({ success: false, message: 'Invalid board ID format' });
-      }
+      const { boardId } = req.params;
 
       const board = await BoardModel.findById(boardId);
       if (!board) {
@@ -36,12 +31,7 @@ export const libraryController = {
 
   async save(req: Request<{ boardId: string }, unknown, LibraryPersistedData>, res: Response) {
     try {
-      const { boardId: boardIdParam } = req.params;
-      const boardId = parseInt(boardIdParam, 10);
-
-      if (isNaN(boardId)) {
-        return res.status(400).json({ success: false, message: 'Invalid board ID format' });
-      }
+      const { boardId } = req.params;
 
       const { libraryItems } = req.body ?? {};
 

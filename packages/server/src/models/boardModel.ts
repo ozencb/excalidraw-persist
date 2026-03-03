@@ -1,10 +1,15 @@
+import crypto from 'crypto';
 import { getDb } from '../lib/database';
 import { Board, BoardStatus, UpdateBoardInput } from '../types';
 
 export class BoardModel {
   public static async create(): Promise<Board> {
     const db = await getDb();
-    const result = await db.get<Board>('INSERT INTO boards DEFAULT VALUES RETURNING *');
+    const id = crypto.randomUUID();
+    const result = await db.get<Board>(
+      'INSERT INTO boards (id) VALUES (?) RETURNING *',
+      [id]
+    );
 
     if (!result) {
       throw new Error('Failed to create board');
@@ -13,14 +18,14 @@ export class BoardModel {
     return result;
   }
 
-  public static async findById(id: number): Promise<Board | undefined> {
+  public static async findById(id: string): Promise<Board | undefined> {
     const db = await getDb();
     return db.get<Board>('SELECT * FROM boards WHERE id = ?', [id]);
   }
 
   public static async findAllActive(): Promise<Board[]> {
     const db = await getDb();
-    const result = await db.all<Board[]>('SELECT * FROM boards WHERE status = ? ORDER BY id ASC', [
+    const result = await db.all<Board[]>('SELECT * FROM boards WHERE status = ? ORDER BY created_at ASC', [
       BoardStatus.ACTIVE,
     ]);
     return result;
@@ -35,7 +40,7 @@ export class BoardModel {
     return result;
   }
 
-  public static async update(id: number, input: UpdateBoardInput = {}): Promise<Board | undefined> {
+  public static async update(id: string, input: UpdateBoardInput = {}): Promise<Board | undefined> {
     const db = await getDb();
     const board = await this.findById(id);
 
@@ -69,20 +74,20 @@ export class BoardModel {
     };
   }
 
-  public static async moveToTrash(id: number): Promise<Board | undefined> {
+  public static async moveToTrash(id: string): Promise<Board | undefined> {
     return this.update(id, { status: BoardStatus.DELETED });
   }
 
-  public static async restoreFromTrash(id: number): Promise<Board | undefined> {
+  public static async restoreFromTrash(id: string): Promise<Board | undefined> {
     return this.update(id, { status: BoardStatus.ACTIVE });
   }
 
-  public static async permanentlyDelete(id: number): Promise<void> {
+  public static async permanentlyDelete(id: string): Promise<void> {
     const db = await getDb();
     await db.run('DELETE FROM boards WHERE id = ?', [id]);
   }
 
-  public static async delete(id: number): Promise<void> {
+  public static async delete(id: string): Promise<void> {
     return this.permanentlyDelete(id);
   }
 }

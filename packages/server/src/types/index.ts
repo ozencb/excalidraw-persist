@@ -4,7 +4,7 @@ export enum BoardStatus {
 }
 
 export interface Board {
-  id: number;
+  id: string;
   name: string;
   status: 'ACTIVE' | 'DELETED';
   created_at: number;
@@ -13,7 +13,7 @@ export interface Board {
 
 export interface Element {
   id: string;
-  board_id: number;
+  board_id: string;
   data: string; // JSON string
   element_index: string;
   type: string;
@@ -24,14 +24,14 @@ export interface Element {
 
 export interface StoredFile {
   id: string;
-  board_id: number;
+  board_id: string;
   data: string;
   created_at: number;
   updated_at: number;
 }
 
 export interface LibraryRecord {
-  board_id: number;
+  board_id: string;
   data: string;
   updated_at: number;
 }

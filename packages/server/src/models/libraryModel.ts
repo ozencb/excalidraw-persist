@@ -9,7 +9,7 @@ interface SaveOptions {
 }
 
 export class LibraryModel {
-  public static async getByBoardId(boardId: number): Promise<LibraryPersistedData | null> {
+  public static async getByBoardId(boardId: string): Promise<LibraryPersistedData | null> {
     const db = await getDb();
     const record = await db.get<LibraryRecord | undefined>(
       'SELECT board_id, data, updated_at FROM libraries WHERE board_id = ?',
@@ -37,7 +37,7 @@ export class LibraryModel {
   }
 
   public static async save(
-    boardId: number,
+    boardId: string,
     libraryItems: ExcalidrawLibraryItems,
     options: SaveOptions = {}
   ): Promise<void> {
@@ -75,7 +75,7 @@ export class LibraryModel {
     }
   }
 
-  public static async deleteByBoardId(boardId: number): Promise<void> {
+  public static async deleteByBoardId(boardId: string): Promise<void> {
     const db = await getDb();
     await db.run('DELETE FROM libraries WHERE board_id = ?', [boardId]);
   }

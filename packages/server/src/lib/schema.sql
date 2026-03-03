@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS boards (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id TEXT PRIMARY KEY,
   name  TEXT NOT NULL DEFAULT (
     strftime('%Y-%m-%d %H:%M:%S','now')
   ),
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS boards (
 
 CREATE TABLE IF NOT EXISTS elements (
   id TEXT NOT NULL,
-  board_id INTEGER NOT NULL,
+  board_id TEXT NOT NULL,
   data TEXT NOT NULL,
   element_index TEXT NOT NULL,
   type TEXT NOT NULL,
@@ -26,7 +26,7 @@ CREATE INDEX IF NOT EXISTS idx_elements_board_id ON elements(board_id);
 
 CREATE TABLE IF NOT EXISTS files (
   id TEXT NOT NULL,
-  board_id INTEGER NOT NULL,
+  board_id TEXT NOT NULL,
   data TEXT NOT NULL,
   created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
   updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS files (
 CREATE INDEX IF NOT EXISTS idx_files_board_id ON files(board_id);
 
 CREATE TABLE IF NOT EXISTS libraries (
-  board_id INTEGER PRIMARY KEY,
+  board_id TEXT PRIMARY KEY,
   data TEXT NOT NULL DEFAULT '[]',
   updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
   FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE

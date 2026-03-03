@@ -9,11 +9,7 @@ import logger from '../utils/logger';
 export const elementController = {
   async getByBoardId(req: Request<{ boardId: string }>, res: Response) {
     try {
-      const { boardId: boardIdParam } = req.params;
-      const boardId = parseInt(boardIdParam, 10);
-      if (isNaN(boardId)) {
-        return res.status(400).json({ success: false, message: 'Invalid board ID format' });
-      }
+      const { boardId } = req.params;
 
       const board = await BoardModel.findById(boardId);
 
@@ -48,10 +44,7 @@ export const elementController = {
 
   async checkFiles(req: Request<{ boardId: string }>, res: Response) {
     try {
-      const boardId = parseInt(req.params.boardId, 10);
-      if (isNaN(boardId)) {
-        return res.status(400).json({ success: false, message: 'Invalid board ID format' });
-      }
+      const { boardId } = req.params;
 
       const { fileIds } = req.body as { fileIds: string[] };
       if (!Array.isArray(fileIds)) {
@@ -70,10 +63,7 @@ export const elementController = {
 
   async uploadFiles(req: Request<{ boardId: string }>, res: Response) {
     try {
-      const boardId = parseInt(req.params.boardId, 10);
-      if (isNaN(boardId)) {
-        return res.status(400).json({ success: false, message: 'Invalid board ID format' });
-      }
+      const { boardId } = req.params;
 
       const board = await BoardModel.findById(boardId);
       if (!board) {
@@ -96,10 +86,7 @@ export const elementController = {
 
   async applyDelta(req: Request<{ boardId: string }>, res: Response) {
     try {
-      const boardId = parseInt(req.params.boardId, 10);
-      if (isNaN(boardId)) {
-        return res.status(400).json({ success: false, message: 'Invalid board ID format' });
-      }
+      const { boardId } = req.params;
 
       const board = await BoardModel.findById(boardId);
       if (!board) {
@@ -141,12 +128,8 @@ export const elementController = {
     res: Response
   ) {
     try {
-      const { boardId: boardIdParam } = req.params;
+      const { boardId } = req.params;
       const body = req.body;
-      const boardId = parseInt(boardIdParam, 10);
-      if (isNaN(boardId)) {
-        return res.status(400).json({ success: false, message: 'Invalid board ID format' });
-      }
 
       let elements: ExcalidrawElement[] = [];
       let files: ExcalidrawFilesMap = {};

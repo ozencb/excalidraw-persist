@@ -3,6 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import { serverConfig } from './config';
 import { openDatabase, initializeDatabase, closeDatabase } from './lib/database';
+import { runMigrations } from './lib/migrations';
 import apiRoutes from './routes';
 import logger from './utils/logger';
 
@@ -31,6 +32,9 @@ const startServer = async () => {
 
     await initializeDatabase();
     logger.info('Database initialized');
+
+    await runMigrations();
+    logger.info('Migrations complete');
 
     app.listen(PORT, () => {
       logger.info(`Server is running on http://localhost:${PORT}`);
