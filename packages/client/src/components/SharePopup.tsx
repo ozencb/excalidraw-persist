@@ -67,7 +67,18 @@ const SharePopup = ({ isOpen, onClose, boardId }: SharePopupProps) => {
 
   const copyToClipboard = (shareId: string) => {
     const url = `${window.location.origin}/share/${shareId}`;
-    navigator.clipboard.writeText(url);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
     setCopiedId(shareId);
     setTimeout(() => setCopiedId(null), 2000);
   };
