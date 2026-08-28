@@ -3,13 +3,19 @@ import { getDb } from '../lib/database';
 import { Board, BoardStatus, UpdateBoardInput } from '../types';
 
 export class BoardModel {
-  public static async create(): Promise<Board> {
+  public static async create(name?: string): Promise<Board> {
     const db = await getDb();
     const id = crypto.randomUUID();
-    const result = await db.get<Board>(
-      'INSERT INTO boards (id) VALUES (?) RETURNING *',
-      [id]
-    );
+    // Passing a name is optional and back-compatible: when omitted the DB keeps
+    // its timestamp default (schema.sql). When given, the board is created with
+    // that name so it can be deep-linked and found by name.
+    const result =
+      name === undefined
+        ? await db.get<Board>('INSERT INTO boards (id) VALUES (?) RETURNING *', [id])
+        : await db.get<Board>('INSERT INTO boards (id, name) VALUES (?, ?) RETURNING *', [
+            id,
+            name,
+          ]);
 
     if (!result) {
       throw new Error('Failed to create board');
@@ -23,11 +29,22 @@ export class BoardModel {
     return db.get<Board>('SELECT * FROM boards WHERE id = ?', [id]);
   }
 
+  public static async findByName(name: string): Promise<Board | undefined> {
+    const db = await getDb();
+    // The most recently touched ACTIVE board with this exact name — deterministic
+    // resolution for the deep-link / find-or-create-by-name flow.
+    return db.get<Board>(
+      'SELECT * FROM boards WHERE name = ? AND status = ? ORDER BY updated_at DESC LIMIT 1',
+      [name, BoardStatus.ACTIVE]
+    );
+  }
+
   public static async findAllActive(): Promise<Board[]> {
     const db = await getDb();
-    const result = await db.all<Board[]>('SELECT * FROM boards WHERE status = ? ORDER BY created_at ASC', [
-      BoardStatus.ACTIVE,
-    ]);
+    const result = await db.all<Board[]>(
+      'SELECT * FROM boards WHERE status = ? ORDER BY created_at ASC',
+      [BoardStatus.ACTIVE]
+    );
     return result;
   }
 

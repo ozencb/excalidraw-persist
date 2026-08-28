@@ -3,6 +3,7 @@
   "version": "0.18.0-persist.7",
   "description": "Self-hostable Excalidraw server-side persistence, and multi-boards",
   "private": true,
+  "packageManager": "pnpm@10.6.2",
   "scripts": {
     "dev": "pnpm -r run dev",
     "build": "pnpm -r run build",
