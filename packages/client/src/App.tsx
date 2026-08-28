@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import BoardPage from './components/BoardPage';
+import BoardByNamePage from './components/BoardByNamePage';
 import SharePage from './components/SharePage';
 import Loader from './components/Loader';
 import { BoardProvider, useBoardContext } from './contexts/BoardProvider';
@@ -26,6 +27,7 @@ const App = () => {
     <ThemeProvider>
       <Router>
         <Routes>
+          <Route path="/board/name/:name" element={<BoardByNamePage />} />
           <Route
             path="/board/:boardId"
             element={
@@ -42,10 +44,7 @@ const App = () => {
               </BoardProvider>
             }
           />
-          <Route
-            path="/share/:shareId"
-            element={<SharePage />}
-          />
+          <Route path="/share/:shareId" element={<SharePage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>

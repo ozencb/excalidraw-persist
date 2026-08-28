@@ -8,6 +8,9 @@ export const BoardService = {
 
   createBoard: () => api.post<Board>('/boards'),
 
+  findOrCreateByName: (name: string) =>
+    api.post<Board>(`/boards/by-name/${encodeURIComponent(name)}`),
+
   updateBoardName: (boardId: string, name: string) =>
     api.put<Board>(`/boards/${boardId}`, { name }),
 

@@ -6,7 +6,10 @@ import logger from '../utils/logger';
 export const boardController = {
   async create(req: Request, res: Response) {
     try {
-      const board = await BoardModel.create();
+      // An optional name is honored (back-compatible: absent -> DB timestamp default).
+      const rawName = req.body?.name;
+      const name = typeof rawName === 'string' && rawName.trim() ? rawName.trim() : undefined;
+      const board = await BoardModel.create(name);
 
       return res.status(201).json({
         success: true,
@@ -17,6 +20,36 @@ export const boardController = {
       return res.status(500).json({
         success: false,
         message: 'Failed to create board',
+      });
+    }
+  },
+
+  async findOrCreateByName(req: Request, res: Response) {
+    try {
+      // req.params.name is URL-decoded by Express. Deep-linkable named boards:
+      // return the existing ACTIVE board with this name, or create it if absent.
+      const rawName = req.params.name;
+      const name = typeof rawName === 'string' ? rawName.trim() : '';
+
+      if (!name) {
+        return res.status(400).json({
+          success: false,
+          message: 'Board name is required',
+        });
+      }
+
+      const existing = await BoardModel.findByName(name);
+      const board = existing ?? (await BoardModel.create(name));
+
+      return res.status(200).json({
+        success: true,
+        data: board,
+      });
+    } catch (error) {
+      logger.error(`Error resolving board by name ${req.params.name}:`, error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to resolve board by name',
       });
     }
   },
